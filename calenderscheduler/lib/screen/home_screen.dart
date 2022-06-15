@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       floatingActionButton: renderFloatingActionButton(),
       body: SafeArea(
         child: Column(
@@ -59,10 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         showModalBottomSheet(
           context: context,
+          isScrollControlled: true,
           builder: (BuildContext context) {
             return ScheduleBottomSheet();
           },
-          isScrollControlled: true, //화면 전체를 사용하고자 할 때
+          //화면 전체를 사용하고자 할 때
         );
       },
       child: Icon(
