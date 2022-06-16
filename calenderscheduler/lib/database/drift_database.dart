@@ -1,3 +1,5 @@
+// 업데이트를 위한 코드
+// flutter pub run build_runner build
 import 'dart:io';
 
 import 'package:calenderscheduler/model/category_color.dart';
