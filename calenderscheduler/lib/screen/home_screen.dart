@@ -1,11 +1,14 @@
-// ignore_for_file: prefer_const_constructors_in_immutables, prefer_const_constructors
+// ignore_for_file: prefer_const_constructors_in_immutables, prefer_const_constructors, unused_import
 
 import 'package:calenderscheduler/component/caldendar.dart';
 import 'package:calenderscheduler/component/schedule_bottom_sheet.dart';
 import 'package:calenderscheduler/component/schedule_card.dart';
 import 'package:calenderscheduler/component/today_banner.dart';
+import 'package:calenderscheduler/database/drift_database.dart';
+import 'package:calenderscheduler/model/schedule_with_color.dart';
 import 'package:calenderscheduler/theme/color_schemes.g.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({
@@ -19,7 +22,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  DateTime selectedDay = DateTime(
+  DateTime selectedDay = DateTime.utc(
     DateTime.now().year,
     DateTime.now().month,
     DateTime.now().day,
@@ -48,7 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: 8.0,
             ),
-            _ScheduleList(),
+            _ScheduleList(
+              selectedDate: selectedDay,
+            ),
           ],
         ),
       ),
@@ -62,7 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
           context: context,
           isScrollControlled: true,
           builder: (BuildContext context) {
-            return ScheduleBottomSheet();
+            return ScheduleBottomSheet(
+              selectedDate: selectedDay,
+            );
           },
           //화면 전체를 사용하고자 할 때
         );
@@ -87,7 +94,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ScheduleList extends StatelessWidget {
-  const _ScheduleList({Key? key}) : super(key: key);
+  DateTime selectedDate;
+  _ScheduleList({
+    required this.selectedDate,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -96,22 +107,39 @@ class _ScheduleList extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           horizontal: 8.0,
         ),
-        child: ListView.separated(
-          itemCount: 15,
-          itemBuilder: (BuildContext context, int index) {
-            return ScheduleCard(
-              startTime: 12,
-              endTime: 14,
-              content: '프로그래밍 공부 $index',
-              color: Colors.red,
-            );
-          },
-          separatorBuilder: (BuildContext context, int index) {
-            return SizedBox(
-              height: 8.0,
-            );
-          },
-        ),
+        child: StreamBuilder<List<ScheduleWithColor>>(
+            stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasData && snapshot.data!.isEmpty) {
+                return Center(
+                  child: Text('스케쥴이 없습니다.'),
+                );
+              }
+              return ListView.separated(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final scheduleWithColor = snapshot.data![index];
+
+                  return ScheduleCard(
+                    startTime: scheduleWithColor.schedule.startTime,
+                    endTime: scheduleWithColor.schedule.endTime,
+                    content: scheduleWithColor.schedule.content,
+                    color: Color(
+                      int.parse('FF${scheduleWithColor.categoryColor.hexCode}',
+                          radix: 16),
+                    ),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) {
+                  return SizedBox(
+                    height: 8.0,
+                  );
+                },
+              );
+            }),
       ),
     );
   }

@@ -1,11 +1,17 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:calenderscheduler/component/custom_text_field.dart';
+import 'package:calenderscheduler/database/drift_database.dart';
+import 'package:calenderscheduler/model/category_color.dart';
 import 'package:calenderscheduler/theme/color_schemes.g.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 class ScheduleBottomSheet extends StatefulWidget {
-  const ScheduleBottomSheet({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+  const ScheduleBottomSheet({required this.selectedDate, Key? key})
+      : super(key: key);
 
   @override
   State<ScheduleBottomSheet> createState() => _ScheduleBottomSheetState();
@@ -17,6 +23,7 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
   int? startTime;
   int? endTime;
   String? content;
+  int? selectedColorId;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +67,27 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
                     SizedBox(
                       height: 10,
                     ),
-                    _ColorPicker(),
+                    FutureBuilder<List<CategoryColor>>(
+                      future: GetIt.I<LocalDatabase>().getCategoryColors(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData &&
+                            selectedColorId == null &&
+                            snapshot.data!.isNotEmpty) {
+                          selectedColorId = snapshot.data![0].id;
+                        }
+                        return _ColorPicker(
+                          colors: snapshot.hasData ? snapshot.data! : [],
+                          selectedColorId: selectedColorId,
+                          colorIdSetter: (int id) {
+                            setState(
+                              () {
+                                selectedColorId = id;
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
                     _SaveButton(
                       onPressed: onSavePressed,
                     ),
@@ -86,16 +113,25 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
     content = val;
   }
 
-  void onSavePressed() {
+  void onSavePressed() async {
     if (formKey.currentState == null) {
       return;
     }
     if (formKey.currentState!.validate()) {
-      print('에러가 없습니다.');
       formKey.currentState!.save();
-    } else {
-      print('에러가 있습니다.');
-    }
+
+      await GetIt.I<LocalDatabase>().createSchedule(
+        SchedulesCompanion(
+          date: Value(widget.selectedDate),
+          startTime: Value(startTime!),
+          endTime: Value(endTime!),
+          content: Value(content!),
+          colorID: Value(selectedColorId!),
+        ),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } else {}
   }
 }
 
@@ -152,8 +188,18 @@ class _Contents extends StatelessWidget {
   }
 }
 
+typedef ColorIdSetter = void Function(int id);
+
 class _ColorPicker extends StatelessWidget {
-  const _ColorPicker({Key? key}) : super(key: key);
+  final List<CategoryColor> colors;
+  final int? selectedColorId;
+  final ColorIdSetter colorIdSetter;
+  const _ColorPicker({
+    required this.colors,
+    required this.selectedColorId,
+    required this.colorIdSetter,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -161,24 +207,38 @@ class _ColorPicker extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Wrap(
         spacing: 8.0,
-        children: [
-          renderColor(Color(0xFFE91E63)),
-          renderColor(Color(0xFFF44336)),
-          renderColor(Color(0xFFFF9800)),
-          renderColor(Color(0xFFFFEB3B)),
-          renderColor(Color(0xFF4CAF50)),
-          renderColor(Color(0xFF2196F3)),
-          renderColor(Color(0xFF3F51B5)),
-          renderColor(Color(0xFF9C27B0)),
-        ],
+        children: colors
+            .map(
+              (e) => GestureDetector(
+                onTap: () {
+                  colorIdSetter(e.id);
+                },
+                child: renderColor(
+                  e,
+                  selectedColorId == e.id,
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
 
-  Widget renderColor(Color color) {
+  Widget renderColor(CategoryColor color, bool isSelected) {
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        color: Color(
+          int.parse(
+            'FF${color.hexCode}',
+            radix: 16,
+          ),
+        ),
+        border: isSelected
+            ? Border.all(
+                color: Colors.black,
+                width: 4.0,
+              )
+            : null,
         shape: BoxShape.circle,
       ),
       width: 32.0,
