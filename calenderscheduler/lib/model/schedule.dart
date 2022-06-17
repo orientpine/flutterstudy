@@ -3,7 +3,7 @@
 import 'package:drift/drift.dart';
 
 class Schedules extends Table {
-  // PRIMART KEY
+  // PRIMARY KEY
   IntColumn get id => integer().autoIncrement()(); // 자동으로 올라가게 된다.
   // 내용
   TextColumn get content => text()();

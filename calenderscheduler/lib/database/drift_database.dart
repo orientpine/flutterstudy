@@ -30,6 +30,12 @@ class LocalDatabase extends _$LocalDatabase {
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
 
+  Future<Schedule> getSchedulesById(int id) {
+    final query = select(schedules);
+    query.where((tbl) => tbl.id.equals(id));
+    return query.getSingle();
+  }
+
   // 이게 정석
   Stream<List<ScheduleWithColor>> watchSchedules(DateTime date) {
     final query = select(schedules).join(
@@ -43,6 +49,11 @@ class LocalDatabase extends _$LocalDatabase {
       ],
     );
     query.where(schedules.date.equals(date));
+    query.orderBy(
+      [
+        OrderingTerm.asc(schedules.startTime),
+      ],
+    );
     return query.watch().map(
           (rows) => rows
               .map(
@@ -54,6 +65,24 @@ class LocalDatabase extends _$LocalDatabase {
               .toList(),
         );
   }
+
+  // Future<int> removeSchedule(int id) {
+  //   final query = delete(schedules);
+  //   query.where((tbl) => tbl.id.equals(id));
+  //   return query.go();
+  // }
+
+  Future<int> removeSchedule(int id) =>
+      (delete(schedules)..where((tbl) => tbl.id.equals(id))).go();
+
+  // Future<int> updateScheduleById(int id, SchedulesCompanion data) {
+  //   final query = update(schedules);
+  //   query.where((tbl) => tbl.id.equals(id));
+  //   return query.write(data);
+  // }
+
+  Future<int> updateScheduleById(int id, SchedulesCompanion data) =>
+      (update(schedules)..where((tbl) => tbl.id.equals(id))).write(data);
 
   @override
   int get schemaVersion => 1;

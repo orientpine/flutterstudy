@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DateTime.now().month,
     DateTime.now().day,
   );
-  DateTime focusedDay = DateTime.now();
+  DateTime focusedDay = DateTime.now().toUtc();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             TodayBanner(
               selectedDay: selectedDay,
-              scheduleCount: 3,
             ),
             SizedBox(
               height: 8.0,
@@ -122,14 +121,37 @@ class _ScheduleList extends StatelessWidget {
                 itemCount: snapshot.data!.length,
                 itemBuilder: (BuildContext context, int index) {
                   final scheduleWithColor = snapshot.data![index];
-
-                  return ScheduleCard(
-                    startTime: scheduleWithColor.schedule.startTime,
-                    endTime: scheduleWithColor.schedule.endTime,
-                    content: scheduleWithColor.schedule.content,
-                    color: Color(
-                      int.parse('FF${scheduleWithColor.categoryColor.hexCode}',
-                          radix: 16),
+                  return GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (BuildContext context) {
+                          return ScheduleBottomSheet(
+                            selectedDate: selectedDate,
+                            scheduleId: scheduleWithColor.schedule.id,
+                          );
+                        },
+                        //화면 전체를 사용하고자 할 때
+                      );
+                    },
+                    child: Dismissible(
+                      key: ObjectKey(scheduleWithColor.schedule.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (DismissDirection direction) {
+                        GetIt.I<LocalDatabase>()
+                            .removeSchedule(scheduleWithColor.schedule.id);
+                      },
+                      child: ScheduleCard(
+                        startTime: scheduleWithColor.schedule.startTime,
+                        endTime: scheduleWithColor.schedule.endTime,
+                        content: scheduleWithColor.schedule.content,
+                        color: Color(
+                          int.parse(
+                              'FF${scheduleWithColor.categoryColor.hexCode}',
+                              radix: 16),
+                        ),
+                      ),
                     ),
                   );
                 },

@@ -8,10 +8,12 @@ class CustomTextField extends StatelessWidget {
   final String title;
   final bool isTime; //true 면 시간, 아니면 contents
   final FormFieldSetter<String> onSaved;
+  final String initialValue;
   const CustomTextField({
     required this.title,
     required this.isTime,
     required this.onSaved,
+    required this.initialValue,
     Key? key,
   }) : super(key: key);
 
@@ -67,19 +69,21 @@ class CustomTextField extends StatelessWidget {
         return null;
       },
       expands: !isTime,
+      initialValue: initialValue,
       cursorColor: lightColorScheme.inverseSurface,
       maxLines: isTime ? 1 : null,
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        filled: true,
-        fillColor: lightColorScheme.outline.withOpacity(.5),
-      ),
       keyboardType: isTime ? TextInputType.number : TextInputType.multiline,
       inputFormatters: isTime
           ? [
               FilteringTextInputFormatter.digitsOnly,
             ]
           : [],
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        filled: true,
+        fillColor: lightColorScheme.outline.withOpacity(.5),
+        suffixText: isTime ? '시' : '',
+      ),
     );
   }
 }
