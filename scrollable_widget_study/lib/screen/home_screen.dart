@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:scrollable_widget_study/layout/main_layout.dart';
+import 'package:scrollable_widget_study/screen/custom_scroll_view_screen.dart';
 import 'package:scrollable_widget_study/screen/grid_view_screen.dart';
 import 'package:scrollable_widget_study/screen/list_view_screen.dart';
+import 'package:scrollable_widget_study/screen/reorderable_list_view_scren.dart';
 import 'package:scrollable_widget_study/screen/single_child_scroll_view_screen.dart';
 
 class ScreenModel {
@@ -33,6 +35,12 @@ class _Home_ScreenState extends State<Home_Screen> {
     ScreenModel(
         builder: (BuildContext context) => GridViewScreen(),
         name: 'GridViewScreen'),
+    ScreenModel(
+        builder: (BuildContext context) => ReOrderableListViewScreen(),
+        name: 'ReOrderableViewScreen'),
+    ScreenModel(
+        builder: (BuildContext context) => CustomScrollViewScreen(),
+        name: 'CustomScrollViewScreen'),
   ];
 
   @override
@@ -43,10 +51,12 @@ class _Home_ScreenState extends State<Home_Screen> {
           padding: const EdgeInsets.symmetric(
             horizontal: 16.0,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: renderButton(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: renderButton(),
+            ),
           ),
         ));
   }
